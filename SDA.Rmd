@@ -1,0 +1,85 @@
+---
+title: "SDAProj"
+author: "Vaishnavi Deshpande"
+date: "January 30, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+## Including Plots
+
+```{r}
+library(rgdal)
+setwd("C:/Users/rvais/Wdirectory/SPA")
+dir(getwd())
+streets <- readOGR(dsn= getwd(), layer = "pgh_streets")
+plot(streets)
+
+# Number of road segments
+length(streets)
+# Min, max, and mean segment lengths (in miles)
+min(streets$LENGTH)
+max(streets$LENGTH)
+mean(streets$LENGTH)
+# Filter out segments below mean length and create map showing remaining segments
+greater_mean=streets[streets$LENGTH>=mean(streets$LENGTH),]
+greater_mean
+plot(greater_mean)
+```
+
+
+```{r}
+
+load("C:/Users/rvais/Wdirectory/SPA/lnd.RData")
+load("C:/Users/rvais/Wdirectory/SPA/stations.RData")
+
+plot(lnd)
+points(stations)
+plot(stations,col="red",add=TRUE)
+
+# Mean in each polygon
+st1<-stations[c('Value')]
+st_X=stations[c('coords.x1')]
+st_Y=stations[c('coords.x2')]
+Xaggr=aggregate(st_X, lnd, mean)
+Yaggr=aggregate(st_Y, lnd, mean)
+aggr=aggregate(st1,lnd, mean)
+data=data.frame(aggr, Xaggr, Yaggr)
+
+# Plot aggregated values
+### Regions with below average values are red; regions with above values are green.
+spplot(aggr)
+plot(aggr, col=ifelse(aggr$Value<mean(aggr$Value),'blue','pink'))
+
+# Plot before regression to display effect of aggregation
+#Plotting co-ordinate x1 against value before and after aggregation
+plot(x=stations$coords.x1, y=stations$Value,col='red')
+plot(x=data$coords.x1, y=data$Value,col='blue')
+#Plotting co-ordinate x2 against value before and after aggregation
+plot(x=stations$coords.x2, y=stations$Value,col='green')
+plot(x=data$coords.x2, y=data$Value,col='pink')
+
+# Regressions before and after aggregation;After applying lm the,effect is stronger after aggregation.
+#Regression before applying aggregation functions for co-ordinate x1
+summary(lm(data=stations, Value~coords.x1))
+#Regression after applying aggregation functions for co-ordinate x1
+summary(lm(data=data, Value~coords.x1))
+
+#Regression before applying aggregation functions for co-ordinate x2
+summary(lm(data=stations, Value~coords.x2))
+#Regression after applying aggregation functions for co-ordinate x2
+summary(lm(data=data, Value~coords.x2))
+```
+
+By applying regression on the data,we conclude that after applying regression the,effect is stronger after aggregation.
+The R sqaured stats also helps us to conclude that effect is increasing in the aggregated model.
